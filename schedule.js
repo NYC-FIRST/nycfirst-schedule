@@ -1,6 +1,6 @@
 // Build stamp. deploy.sh rewrites the date on every deploy, so the console
 // tells you exactly which version a page is running.
-var SCHEDULE_BUILD = '2026-09-30 15:37';
+var SCHEDULE_BUILD = '2026-09-30 15:38';
 console.log('[schedule] build ' + SCHEDULE_BUILD);
 
 // Centre naming lives at the top level because BOTH DOMContentLoaded blocks below
@@ -494,11 +494,6 @@ document.addEventListener('DOMContentLoaded', function () {
         regLabel.className = 'c-reg-label';
         regLabel.textContent = 'Register';
         a.appendChild(regLabel);
-        var regIcon = document.createElement('span');
-        regIcon.className = 'c-reg-icon';
-        regIcon.setAttribute('aria-hidden', 'true');
-        regIcon.textContent = '\u2197';
-        a.appendChild(regIcon);
         acts.appendChild(a);
       }
 

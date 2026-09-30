@@ -1,4 +1,4 @@
-/* schedule build: 2026-09-30 15:37 */
+/* schedule build: 2026-09-30 15:38 */
 /* keep the raw Webflow output out of sight */
 .hours-data, .row-center, .row-date, .row-enddate, .row-programs, .row-program, .row-tagcolors, .row-host, .row-location, .row-maplink { display:none; }
 .month-label { display:none; }
@@ -76,7 +76,6 @@
 .c-reg-label { text-decoration:underline; text-decoration-thickness:1px;
   text-underline-offset:3px; }
 .c-reg:hover { color:#004E8A; }
-.c-reg-icon { font-size:15px; line-height:1; }
 
 /* Keyboard users get the same affordance a mouse user gets on hover. */
 .c-row a:focus-visible, .c-row button:focus-visible, .sc-chip:focus-visible,
