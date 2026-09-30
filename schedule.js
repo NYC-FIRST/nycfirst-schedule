@@ -1,6 +1,6 @@
 // Build stamp. deploy.sh rewrites the date on every deploy, so the console
 // tells you exactly which version a page is running.
-var SCHEDULE_BUILD = '2026-09-25 18:13';
+var SCHEDULE_BUILD = '2026-09-30 15:37';
 console.log('[schedule] build ' + SCHEDULE_BUILD);
 
 // Centre naming lives at the top level because BOTH DOMContentLoaded blocks below
@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', function () {
   var MON = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
 
   function txt(el) { return el ? el.textContent.trim() : ''; }
-  var DESC_SEQ = 0;   // unique ids so each Read more can point at its own text
+  var DESC_SEQ = 0;   // unique ids so each details toggle can point at its own text
 
   // Staff type plain text into the description on Monday, so a URL or an email
   // address arrives as characters, not a link. Build real nodes rather than
@@ -432,48 +432,78 @@ document.addEventListener('DOMContentLoaded', function () {
     // A closure or alt-hours row publishes its reason as the announcement, and the
     // title already reads "Closed - <reason>". Printing it again just repeats it,
     // so only events carry a description line.
-    if (desc && type === 'event') {
-      var d = document.createElement('div');
-      d.className = 'c-desc';
-      linkify(d, desc);
-      body.appendChild(d);
-      // The description is hidden until asked for. A page can carry a hundred
-      // near-identical qualifiers, and every row reading the same three sentences
-      // is what makes the list unscannable.
-      var descId = 'c-desc-' + (++DESC_SEQ);
-      d.id = descId;
-      d.hidden = true;
-      var more = document.createElement('button');
-      more.type = 'button';
-      more.className = 'c-more';
-      more.textContent = 'Read more';
-      more.setAttribute('aria-expanded', 'false');
-      more.setAttribute('aria-controls', descId);
-      more.addEventListener('click', function () {
-        var open = d.hidden;
-        d.hidden = !open;
-        more.textContent = open ? 'Show less' : 'Read more';
-        more.setAttribute('aria-expanded', open ? 'true' : 'false');
-      });
-      // Directly under the address, above the text it reveals.
-      body.insertBefore(more, d);
-    }
-
+    //
+    // One action row under the address: the details toggle on the left, Register on
+    // the right. The description opens BELOW the row, so Register never moves when
+    // the toggle is pressed. The row is built only when it has something in it.
+    var hasDesc = !!(desc && type === 'event');
     // A per-event "add to calendar" link was removed deliberately: Google's
     // template URL makes a COPY, which silently goes stale when the event moves.
     // The page offers one subscribe link to the real calendar instead.
     var regHref = regEl && regEl.getAttribute('href');
-    if (regHref) {
+    // An empty Webflow link binding comes through as "#", same as the map link.
+    if (regHref === '#') regHref = '';
+
+    if (hasDesc || regHref) {
       var acts = document.createElement('div');
       acts.className = 'c-actions';
-      var a = document.createElement('a');
-      a.className = 'c-reg';
-      a.href = regHref;
-      a.target = '_blank';
-      a.rel = 'noopener';
-      a.textContent = 'Register';
-      acts.appendChild(a);
+
+      var d = null;
+      if (hasDesc) {
+        d = document.createElement('div');
+        d.className = 'c-desc';
+        linkify(d, desc);
+        // The description is hidden until asked for. A page can carry a hundred
+        // near-identical qualifiers, and every row reading the same three sentences
+        // is what makes the list unscannable.
+        var descId = 'c-desc-' + (++DESC_SEQ);
+        d.id = descId;
+        d.hidden = true;
+
+        var more = document.createElement('button');
+        more.type = 'button';
+        more.className = 'c-more';
+        more.setAttribute('aria-expanded', 'false');
+        more.setAttribute('aria-controls', descId);
+        var moreLabel = document.createElement('span');
+        moreLabel.textContent = 'Show details';
+        // The chevron is decoration; aria-expanded already tells a screen reader the state.
+        var moreIcon = document.createElement('span');
+        moreIcon.className = 'c-more-icon';
+        moreIcon.setAttribute('aria-hidden', 'true');
+        moreIcon.textContent = '\u2304';
+        more.appendChild(moreLabel);
+        more.appendChild(moreIcon);
+        more.addEventListener('click', function () {
+          var open = d.hidden;
+          d.hidden = !open;
+          moreLabel.textContent = open ? 'Hide details' : 'Show details';
+          moreIcon.textContent = open ? '\u2303' : '\u2304';
+          more.setAttribute('aria-expanded', open ? 'true' : 'false');
+        });
+        acts.appendChild(more);
+      }
+
+      if (regHref) {
+        var a = document.createElement('a');
+        a.className = 'c-reg';
+        a.href = regHref;
+        a.target = '_blank';
+        a.rel = 'noopener';
+        var regLabel = document.createElement('span');
+        regLabel.className = 'c-reg-label';
+        regLabel.textContent = 'Register';
+        a.appendChild(regLabel);
+        var regIcon = document.createElement('span');
+        regIcon.className = 'c-reg-icon';
+        regIcon.setAttribute('aria-hidden', 'true');
+        regIcon.textContent = '\u2197';
+        a.appendChild(regIcon);
+        acts.appendChild(a);
+      }
+
       body.appendChild(acts);
+      if (d) body.appendChild(d);
     }
 
     el.appendChild(body);

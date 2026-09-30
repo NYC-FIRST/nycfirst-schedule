@@ -1,4 +1,4 @@
-/* schedule build: 2026-09-25 18:13 */
+/* schedule build: 2026-09-30 15:37 */
 /* keep the raw Webflow output out of sight */
 .hours-data, .row-center, .row-date, .row-enddate, .row-programs, .row-program, .row-tagcolors, .row-host, .row-location, .row-maplink { display:none; }
 .month-label { display:none; }
@@ -52,11 +52,31 @@
   text-decoration-color:rgba(74,72,68,0.35); text-underline-offset:2px; }
 .c-addr a:hover { color:#0066B3; text-decoration-color:#0066B3; }
 .c-desc[hidden] { display:none; }
-.c-more { align-self:flex-start; margin-top:4px; padding:0; border:0; background:none;
-  font:inherit; font-size:16px; font-weight:600; color:#0066B3; cursor:pointer;
-  text-decoration:underline; text-decoration-thickness:1px; text-underline-offset:3px; }
+
+/* Action row under the address: details toggle left, Register right. Both are
+   plain text controls — no fill, no border, no pill — told apart by weight and
+   colour. The description opens below this row, so Register never moves. */
+.c-actions { display:flex; flex-direction:row; flex-wrap:wrap; align-items:center;
+  justify-content:space-between; gap:4px 24px; margin-top:4px; }
+.c-more, .c-reg { display:inline-flex; align-items:center; gap:6px; min-height:36px;
+  font-family:inherit; font-size:16px; line-height:1.3; cursor:pointer;
+  text-underline-offset:3px; }
+/* Quieter than Register by weight only: same brand blue and underline, regular
+   weight. The underline sits on the label so the chevron carries no stray line. */
+.c-more { padding:0; margin:0; border:0; background:none; border-radius:0;
+  font-weight:400; color:#0066B3; text-decoration:none; text-align:left; }
+.c-more > span:first-child { text-decoration:underline; text-decoration-thickness:1px;
+  text-underline-offset:3px; }
 .c-more:hover { color:#004E8A; }
-.c-more:focus-visible { outline:2px solid #0066B3; outline-offset:2px; border-radius:3px; }
+.c-more-icon { font-size:15px; line-height:1; }
+/* Loud: bold brand blue text link. margin-left:auto keeps it on the right even
+   when a row has no description and so no toggle. */
+.c-reg { margin-left:auto; font-weight:600; color:#0066B3; text-decoration:none; }
+/* Underline the word only, so the arrow doesn't carry a stray line. */
+.c-reg-label { text-decoration:underline; text-decoration-thickness:1px;
+  text-underline-offset:3px; }
+.c-reg:hover { color:#004E8A; }
+.c-reg-icon { font-size:15px; line-height:1; }
 
 /* Keyboard users get the same affordance a mouse user gets on hover. */
 .c-row a:focus-visible, .c-row button:focus-visible, .sc-chip:focus-visible,
@@ -65,10 +85,11 @@
 .c-desc a { color:#0066B3; text-decoration:underline; text-underline-offset:2px; }
 .c-desc { font-family:inherit; font-size:16px; font-weight:400; color:#231F20;
   line-height:1.6; margin-top:2px; }
-.c-actions { display:flex; flex-direction:row; flex-wrap:wrap; align-items:baseline;
-  gap:6px 18px; margin-top:6px; }
-.c-reg  { font-size:16px; font-weight:600; color:#0066B3; text-decoration:underline;
-  text-underline-offset:3px; }
+
+/* Touch: full 44px tap targets. */
+@media (pointer:coarse), (max-width:479px) {
+  .c-more, .c-reg { min-height:44px; }
+}
 
 /* Page-level utility line: below the hero, above the filter panel, and
    deliberately outside the filter box — it filters nothing. Same width and auto
