@@ -1,6 +1,6 @@
 // Build stamp. deploy.sh rewrites the date on every deploy, so the console
 // tells you exactly which version a page is running.
-var SCHEDULE_BUILD = '2026-09-30 15:38';
+var SCHEDULE_BUILD = '2026-10-01 11:49';
 console.log('[schedule] build ' + SCHEDULE_BUILD);
 
 // Centre naming lives at the top level because BOTH DOMContentLoaded blocks below
@@ -208,6 +208,30 @@ document.addEventListener('DOMContentLoaded', function () {
 
   var card = null, seenMonth = null;
 
+  // Closures and alt hours that match exactly — same type, same dates, same reason,
+  // same hours — share one row listing every centre, instead of one row per centre.
+  // Display only: Monday and the CMS keep one item per centre.
+  var GROUPS = {};
+  function ymd(d) { return d ? d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate() : ''; }
+  function joinNames(list) {
+    if (list.length < 2) return list[0] || '';
+    return list.slice(0, -1).join(', ') + ' and ' + list[list.length - 1];
+  }
+  function writeSentence(g) {
+    var names = g.names.slice().sort();
+    var s;
+    if (g.type === 'closed') {
+      s = joinNames(names) + ' will be closed';
+    } else {
+      s = joinNames(names) + ' will be open' +
+          (g.hours ? ' ' + sentenceHours(g.hours) : '') +
+          ' instead of ' + (names.length > 1 ? 'their' : 'its') + ' regular hours';
+    }
+    var phrase = reasonPhrase(g.desc, g.type);
+    if (phrase) s += (g.type === 'closed' ? ' ' : ', ') + phrase;
+    g.sen.textContent = s + '.';
+  }
+
   rows.forEach(function (row) {
     // ---- read what Webflow rendered ----
     var month   = txt(row.querySelector('.month-label'));
@@ -389,21 +413,25 @@ document.addEventListener('DOMContentLoaded', function () {
     if (type !== 'event') {
       // The CMS carries the short centre name; the cards carry the location-first
       // one. DISPLAY is the single source for the public wording, so use it here too.
-      var display = DISPLAY[ckey(place)] || place;
-      var phrase = reasonPhrase(desc, type);
-      var sentence;
-      if (type === 'closed') {
-        sentence = (display || 'This STEM Center') + ' will be closed';
-      } else {
-        sentence = (display || 'This STEM Center') + ' will be open' +
-                   (hours ? ' ' + sentenceHours(hours) : '') +
-                   ' instead of its regular hours';
+      var display = DISPLAY[ckey(place)] || place || 'This STEM Center';
+      var gkey = [type, ymd(start), ymd(end || start), desc.toLowerCase(), hours].join('|');
+      var grp = GROUPS[gkey];
+      var myLoc = locKey ? { key: locKey, label: locLabel, group: locGroup } : null;
+      if (grp) {
+        // Fold this centre into the row already on the page. This is the one
+        // deliberate early return: the duplicate row is meant to be dropped.
+        if (grp.names.indexOf(display) < 0) grp.names.push(display);
+        if (myLoc && !grp.locs.some(function (l) { return l.key === myLoc.key; })) grp.locs.push(myLoc);
+        writeSentence(grp);
+        if (teaser) teaserShown--;
+        return;
       }
-      if (phrase) sentence += (type === 'closed' ? ' ' : ', ') + phrase;
-      sentence += '.';
       var sen = document.createElement('div');
       sen.className = 'c-sentence';
-      sen.textContent = sentence;
+      grp = GROUPS[gkey] = { sen: sen, type: type, hours: hours, desc: desc,
+                             names: [display], locs: myLoc ? [myLoc] : [] };
+      el.scLocs = grp.locs;
+      writeSentence(grp);
       body.appendChild(sen);
     }
 
@@ -523,6 +551,15 @@ document.addEventListener('DOMContentLoaded', function () {
     // matching is written as "any of" so that change stays a one-line change.
     var KIND_LABEL = { all: 'All updates', event: 'Events', closed: 'Closures', alt: 'Alt hours' };
 
+    // A grouped closure row stands for several centres, so it carries a list.
+    function rowLocs(r) {
+      if (r.scLocs) return r.scLocs;
+      var key = r.getAttribute('data-loc');
+      return key ? [{ key: key,
+                      label: r.getAttribute('data-loc-label') || '',
+                      group: r.getAttribute('data-loc-group') || 'other' }] : [];
+    }
+
     var typesPresent = [], progsOnPage = [], locs = [];
     allRows.forEach(function (r) {
       var ty = r.getAttribute('data-type');
@@ -530,12 +567,9 @@ document.addEventListener('DOMContentLoaded', function () {
       (r.getAttribute('data-programs') || '').split('|').forEach(function (pr) {
         if (pr && progsOnPage.indexOf(pr) < 0) progsOnPage.push(pr);
       });
-      var key = r.getAttribute('data-loc');
-      if (key && !locs.some(function (l) { return l.key === key; })) {
-        locs.push({ key: key,
-                    label: r.getAttribute('data-loc-label') || '',
-                    group: r.getAttribute('data-loc-group') || 'other' });
-      }
+      rowLocs(r).forEach(function (l) {
+        if (!locs.some(function (x) { return x.key === l.key; })) locs.push(l);
+      });
     });
 
     // Approved tags only. A vetted tag carries a colour from the Tags board; one still
@@ -726,7 +760,7 @@ document.addEventListener('DOMContentLoaded', function () {
       allRows.forEach(function (r) {
         var ty = r.getAttribute('data-type');
         var okKind = state.kind === 'all' || ty === state.kind;
-        var okLoc  = !state.loc || r.getAttribute('data-loc') === state.loc;
+        var okLoc  = !state.loc || rowLocs(r).some(function (l) { return l.key === state.loc; });
 
         // "any of" so multi-select programmes stay a one-line change
         var rowProgs = (r.getAttribute('data-programs') || '').split('|');
