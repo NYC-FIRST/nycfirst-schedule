@@ -1,6 +1,6 @@
 // Build stamp. deploy.sh rewrites the date on every deploy, so the console
 // tells you exactly which version a page is running.
-var SCHEDULE_BUILD = '2026-10-01 11:49';
+var SCHEDULE_BUILD = '2026-10-01 11:51';
 console.log('[schedule] build ' + SCHEDULE_BUILD);
 
 // Centre naming lives at the top level because BOTH DOMContentLoaded blocks below
@@ -221,15 +221,24 @@ document.addEventListener('DOMContentLoaded', function () {
     var names = g.names.slice().sort();
     var s;
     if (g.type === 'closed') {
-      s = joinNames(names) + ' will be closed';
+      s = ' will be closed';
     } else {
-      s = joinNames(names) + ' will be open' +
+      s = ' will be open' +
           (g.hours ? ' ' + sentenceHours(g.hours) : '') +
           ' instead of ' + (names.length > 1 ? 'their' : 'its') + ' regular hours';
     }
     var phrase = reasonPhrase(g.desc, g.type);
     if (phrase) s += (g.type === 'closed' ? ' ' : ', ') + phrase;
-    g.sen.textContent = s + '.';
+    // Centre names in bold, the joining words and the rest of the sentence plain.
+    g.sen.textContent = '';
+    names.forEach(function (n, i) {
+      if (i > 0) g.sen.appendChild(document.createTextNode(i === names.length - 1 ? ' and ' : ', '));
+      var b = document.createElement('strong');
+      b.className = 'c-centre';
+      b.textContent = n;
+      g.sen.appendChild(b);
+    });
+    g.sen.appendChild(document.createTextNode(s + '.'));
   }
 
   rows.forEach(function (row) {
