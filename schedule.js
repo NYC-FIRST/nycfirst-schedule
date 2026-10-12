@@ -1,6 +1,6 @@
 // Build stamp. deploy.sh rewrites the date on every deploy, so the console
 // tells you exactly which version a page is running.
-var SCHEDULE_BUILD = '2026-10-12 15:02';
+var SCHEDULE_BUILD = '2026-10-12 15:03';
 console.log('[schedule] build ' + SCHEDULE_BUILD);
 
 // Centre naming lives at the top level because BOTH DOMContentLoaded blocks below
@@ -955,6 +955,8 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function buildOverridesFromDom() {
+  // Local helper: the txt() in the Upcoming block is out of scope here.
+  function txt(el) { return el ? String(el.textContent || '').replace(/\s+/g, ' ').trim() : ''; }
   var hrsSource = document.querySelectorAll('.hrs-list .hrs-row');
 
   if (hrsSource.length) {
