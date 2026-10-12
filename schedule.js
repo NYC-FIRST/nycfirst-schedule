@@ -1,6 +1,6 @@
 // Build stamp. deploy.sh rewrites the date on every deploy, so the console
 // tells you exactly which version a page is running.
-var SCHEDULE_BUILD = '2026-10-01 11:51';
+var SCHEDULE_BUILD = '2026-10-12 15:02';
 console.log('[schedule] build ' + SCHEDULE_BUILD);
 
 // Centre naming lives at the top level because BOTH DOMContentLoaded blocks below
@@ -1016,6 +1016,14 @@ document.addEventListener('DOMContentLoaded', function () {
   var OVERRIDES_URL = 'https://n8n.nycfirst.org/webhook/sc-overrides';
 
   function loadOverrides() {
+    // Preferred source: the hidden .hrs-list collection list Webflow renders into
+    // the page (wrapper class .hrs-hidden). It comes from the CMS, so page views
+    // never wait on n8n or Monday. Its presence alone decides — an empty list
+    // just means there are no current closures.
+    if (document.querySelector('.hrs-hidden')) {
+      buildOverridesFromDom();
+      return { then: function (f) { f(); } };
+    }
     if (!window.fetch || !window.Promise) {
       buildOverridesFromDom();
       return { then: function (f) { f(); } };
