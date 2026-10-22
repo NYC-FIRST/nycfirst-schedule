@@ -1,3 +1,21 @@
+# v1.2 — Faster, lighter publishing
+
+Released October 22, 2026
+
+## Behind the scenes
+
+### Publishing uses far fewer Monday.com calls
+
+Publishing an event was making about 1,138 calls to Monday.com, and a few busy days went over Monday's daily limit of 10,000. Each publish now makes about 6 calls.
+
+Publishing is also faster: about 9 seconds instead of 1 to 2 minutes.
+
+### Today's Hours reads closures from the page
+
+Since October 12, Today's Hours on the home page reads closures from the website itself instead of asking the automation on every visit.
+
+---
+
 # v1.1 — Launch-day updates
 
 Released September 25, 2026

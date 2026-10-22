@@ -42,6 +42,8 @@ Publishes an event to the website and calendars when its publish status changes,
 
 Some Monday reads and write-backs retry automatically on failure.
 
+The lookup nodes (Calendars registry, Monday users, venue/tags) are set to **Execute Once**. Without it, n8n ran each lookup once per event on the board, about 1,138 Monday calls per publish; with it, about 6. See [reliability.md](reliability.md#incident-oct-2026-monday-api-quota).
+
 **Event scope.** Events may be STEM Center events, school events, partner-site events, other off-site events, or organization-wide events. The STEM Center column holds the host center, or Org Wide; it also decides which calendars are invited.
 
 **Event location.** Each location field is resolved on its own, in this order:
@@ -78,12 +80,14 @@ Changes to other columns are ignored. The updated fields appear as the center's 
 
 ### SC Overrides (public feed)
 
-Returns the published closures and alternate hours covering today and the next 14 days, by date and center code. `schedule.js` uses this for Today's Hours and falls back to page rows if it fails.
+Returns the published closures and alternate hours covering today and the next 14 days, by date and center code.
+
+Since Oct 12, 2026, `schedule.js` reads Today's Hours closures from a hidden Webflow CMS list on the page (`.hrs-hidden`) and calls this feed only on pages that don't have that list. Each call reads Monday once.
 
 - Published rows only; event-type rows excluded.
 - Uses New York time; end dates are inclusive.
 - A closure outranks alternate hours on the same day.
-- Read-only, no authentication, cached for 60 seconds.
+- Read-only, no authentication, not cached.
 
 ### SC-Status API and SC-Weekly API (public feeds)
 
@@ -108,7 +112,7 @@ These exist in n8n but are not part of the normal production path.
 | --- | --- | --- |
 | Full Sync - Monday.com - Webflow | Active, on-demand trigger | Pushes every center's weekly hours to Webflow in one pass. A maintenance tool, not part of normal operation. Needs review before use. |
 | Monday ↔ Google Calendar | Active, not called | Subworkflow. Only caller is the disconnected calendar step in Schedule Changes. The Events workflow does not use it. |
-| Monday ↔ Google Calendar with Invites | Active, not called | As above. Last run Sept 18, 2026. |
+| Monday ↔ Google Calendar with Invites | Active, not called | As above. Last run Sept 18, 2026. Its Monday users lookup runs once per calendar row; set it to Execute Once before reconnecting. |
 | Schedule Changes - Webflow | Inactive | Earlier version of the Schedule Changes workflow. |
 | Events - monday-eventbrite, Eventbrite → Monday v2 | Active | Earlier Eventbrite-based events path (spring 2026). Scheduled for cleanup. |
 | Eventbrite → Monday | Inactive | First version of the above. |
