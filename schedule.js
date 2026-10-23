@@ -1,6 +1,6 @@
 // Build stamp. deploy.sh rewrites the date on every deploy, so the console
 // tells you exactly which version a page is running.
-var SCHEDULE_BUILD = '2026-10-23 16:49';
+var SCHEDULE_BUILD = '2026-10-23 16:54';
 console.log('[schedule] build ' + SCHEDULE_BUILD);
 
 // Centre naming lives at the top level because BOTH DOMContentLoaded blocks below
@@ -990,7 +990,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // lowercased. Lets the pill and the sentence differ from what the hours field says.
   var SPECIALS = {
     'by appointment': {
-      pill: 'Scheduled programs only',
+      pill: 'SCHEDULED PROGRAMS',
       detail: 'Open for scheduled student and educator programs. No public drop-in hours.'
     }
   };
@@ -1248,34 +1248,25 @@ document.addEventListener('DOMContentLoaded', function () {
       return p ? lead + ' \u00b7 ' + p + '.' : lead + '.';
     }
 
-    // data-status lets the CSS mark the line (a green dot for open now) and decide
-    // which badges earn space: exceptions show one, an ordinary day shows none.
-    function setPill(cls, text, status) {
+    function setPill(cls, text) {
       pill.className = 'status-pill ' + cls;
       pill.textContent = text;
-      card.setAttribute('data-status', status);
     }
 
     var today = dayInfo(0);
 
     // No clock hours today — by appointment, scheduled programs, and similar.
     if (today.kind === 'special') {
-      // Who may use the centre is not the same thing as whether it is open, so the
-      // label says "Access" and the line under it says only what the data knows:
-      // the mapped explanation, or the next day with clock hours, or nothing.
       var sp = SPECIALS[today.label.trim().toLowerCase()];
-      setPill('is-special', sp ? sp.pill : 'Access: ' + today.label, 'special');
-      var nx = sp ? '' : nextOpenPhrase();
-      detail.textContent = sp ? sp.detail : (nx ? nx + '.' : '');
+      setPill('is-special', sp ? sp.pill : today.label.toUpperCase());
+      detail.textContent = sp ? sp.detail : today.label;
       return;
     }
 
     // Shut all day: the CMS says Closed, or a closure was announced.
     if (today.kind === 'closed') {
-      // The badge already says closed today; the line says when it next opens.
-      setPill('is-closed', 'Closed today', 'closed');
-      var nxt = nextOpenPhrase();
-      detail.textContent = nxt ? nxt + '.' : '';
+      setPill('is-closed', 'CLOSED TODAY');
+      detail.textContent = closedLine('Closed today');
       return;
     }
 
@@ -1284,7 +1275,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (today.over) {
       // The pill names the situation; the hours themselves belong in the sentence,
       // where they read as words rather than as a label.
-      setPill('is-alt', 'Alternate hours', 'alt');
+      setPill('is-alt', 'ALT HOURS');
       var altRange = 'Alternate hours today: ' + fmt(today.start) + ' – ' + fmt(today.end);
       if (now.min >= today.start && now.min < today.end) {
         detail.textContent = 'Open now · ' + altRange + '.';
@@ -1299,10 +1290,9 @@ document.addEventListener('DOMContentLoaded', function () {
     // Regular hours. The pill stays REGULAR HOURS all day — it answers "is this center
     // running its normal schedule", not "is the door open this minute". The detail line
     // carries the right-now status.
-    setPill('is-open', 'Regular hours', 'regular');
+    setPill('is-open', 'REGULAR HOURS');
     if (now.min >= today.start && now.min < today.end) {
-      card.setAttribute('data-status', 'open');
-      detail.textContent = 'Open today until ' + fmt(today.end) + '.';
+      detail.textContent = 'Open until ' + fmt(today.end) + '.';
     } else if (now.min < today.start) {
       detail.textContent = 'Closed now · Open ' + fmt(today.start) + ' – ' + fmt(today.end) + ' today.';
     } else {

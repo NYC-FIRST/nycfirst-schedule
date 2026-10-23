@@ -1,4 +1,4 @@
-/* schedule build: 2026-10-23 16:49 */
+/* schedule build: 2026-10-23 16:54 */
 /* keep the raw Webflow output out of sight */
 .announce-image, .hours-data, .row-center, .row-date, .row-enddate, .row-programs, .row-program, .row-tagcolors, .row-host, .row-location, .row-maplink { display:none; }
 .month-label { display:none; }
@@ -77,13 +77,13 @@
   text-underline-offset:3px; }
 .c-more:hover { color:#004E8A; }
 .c-more-icon { font-size:15px; line-height:1; }
-/* Register is the primary action: a filled brand-blue button. margin-left:auto
-   keeps it on the right even when a row has no details toggle. */
-.c-reg { margin-left:auto; justify-content:center; min-width:112px; box-sizing:border-box;
-  padding:10px 20px; border-radius:8px; background:#0066B3; color:#fff;
-  font-weight:600; text-decoration:none; white-space:nowrap; }
-.c-reg-label { text-decoration:none; }
-.c-reg:hover { background:#004E8A; color:#fff; }
+/* Loud: bold brand blue text link. margin-left:auto keeps it on the right even
+   when a row has no description and so no toggle. */
+.c-reg { margin-left:auto; font-weight:600; color:#0066B3; text-decoration:none; }
+/* Underline the word only, so the arrow doesn't carry a stray line. */
+.c-reg-label { text-decoration:underline; text-decoration-thickness:1px;
+  text-underline-offset:3px; }
+.c-reg:hover { color:#004E8A; }
 
 /* Keyboard users get the same affordance a mouse user gets on hover. */
 .c-row a:focus-visible, .c-row button:focus-visible, .sc-chip:focus-visible,
@@ -144,25 +144,13 @@
    The second script still depends on every class name below.
    ============================================================ */
 .status-pill { display:inline-block; flex:0 0 auto; white-space:nowrap;
-  font-family:inherit; font-size:12px; font-weight:700; text-transform:uppercase;
-  letter-spacing:0.6px; line-height:1.2; border-radius:6px; padding:5px 10px; }
+  font-family:inherit; font-size:13px; font-weight:700; text-transform:uppercase;
+  letter-spacing:0.6px; line-height:1.2; border-radius:999px; padding:6px 14px; }
 .status-pill.is-closed  { background:#D92D20; color:#fff; }
 .status-pill.is-alt     { background:#F5C542; color:#1A1A1A; }
 .status-pill.is-event   { background:#0066B3; color:#fff; }
 .status-pill.is-open    { background:#0A8A43; color:#fff; }
-/* Access restrictions are not an opening status: an outlined neutral label in
-   sentence case, so it reads as information rather than an alert. */
-.status-pill.is-special { background:transparent; color:#3F4247; border:1px solid #9AA0A6;
-  text-transform:none; letter-spacing:0; font-weight:600; font-size:14px; padding:5px 10px; }
-/* An ordinary day needs no badge; the line under the name says it all. */
-.center-card[data-status="regular"] .status-pill,
-.center-card[data-status="open"] .status-pill { display:none; }
-.center-card[data-status="regular"] .center-card-top,
-.center-card[data-status="open"] .center-card-top { gap:0; }
-.center-detail:empty { display:none; }
-.center-card[data-status="open"] .center-detail::before { content:""; display:inline-block;
-  width:9px; height:9px; border-radius:50%; background:#0A8A43; margin-right:8px;
-  vertical-align:1px; }
+.status-pill.is-special { background:#6B7280; color:#fff; }
 
 .hours-list { display:flex; flex-direction:column; gap:16px; width:100%;
   max-width:680px; box-sizing:border-box; }
@@ -170,7 +158,7 @@
 /* align-items:flex-start, not center: a long centre name wraps to two lines and
    the pill should stay level with the first one. min-width:0 lets the name wrap
    at all — without it a flex child refuses to shrink and squashes the pill. */
-.center-card-top { display:flex; flex-direction:column; gap:6px; align-items:flex-start; justify-content:flex-start; }
+.center-card-top { display:flex; flex-direction:row; gap:12px; align-items:flex-start; justify-content:space-between; }
 .center-name-today { font-family:inherit; font-size:20px; font-weight:600; color:#231F20;
   line-height:1.3; min-width:0; }
 .center-detail { font-family:inherit; font-size:17px; font-weight:400; color:#231F20;
@@ -179,8 +167,7 @@
 @media (max-width:479px) {
   .center-name-today { font-size:18px; }
   .center-detail { font-size:16px; }
-  .center-card { padding:14px 16px; }
-  .hours-list { gap:12px; }
+  .status-pill { font-size:12px; padding:6px 12px; letter-spacing:0.6px; }
 }
 
 /* ============================================================
