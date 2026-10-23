@@ -1,4 +1,4 @@
-/* schedule build: 2026-10-23 16:31 */
+/* schedule build: 2026-10-23 16:49 */
 /* keep the raw Webflow output out of sight */
 .announce-image, .hours-data, .row-center, .row-date, .row-enddate, .row-programs, .row-program, .row-tagcolors, .row-host, .row-location, .row-maplink { display:none; }
 .month-label { display:none; }
@@ -23,16 +23,17 @@
 
 .c-body { display:flex; flex-direction:column; gap:2px; flex:1 1 auto; min-width:0; }
 
-.c-top { display:flex; flex-direction:row; flex-wrap:wrap; gap:8px;
-  align-items:center; justify-content:flex-start; }
+.c-top { display:flex; flex-direction:column; gap:6px;
+  align-items:flex-start; justify-content:flex-start; }
+.c-labels { display:flex; flex-direction:row; flex-wrap:wrap; gap:6px; align-items:center; }
 
 /* Compact metadata keeps the uppercase treatment the filter chips already use. */
 .c-when { font-family:inherit; font-size:14px; font-weight:700; letter-spacing:0.6px;
   color:#5F5E5A; text-transform:uppercase; line-height:1.3; }
 
-.c-pill { flex:0 0 auto; white-space:nowrap; font-family:inherit; font-size:13px;
-  font-weight:700; text-transform:uppercase; letter-spacing:0.6px; line-height:1.2;
-  border-radius:999px; padding:6px 14px; color:#fff; background:#9AA0A6; }
+.c-pill { flex:0 0 auto; white-space:nowrap; font-family:inherit; font-size:12px;
+  font-weight:700; text-transform:uppercase; letter-spacing:0.6px; line-height:1;
+  border-radius:6px; padding:5px 9px; color:#fff; background:#9AA0A6; }
 .c-row.is-event  .c-pill { background:#0066B3; color:#fff; }
 .c-row.is-closed .c-pill { background:#D92D20; color:#fff; }
 .c-row.is-alt    .c-pill { background:#F5C542; color:#1A1A1A; }
@@ -42,6 +43,12 @@
 .c-sentence { font-family:inherit; font-size:17px; font-weight:400; color:#231F20;
   line-height:1.5; }
 .c-sentence .c-centre { font-weight:600; }
+.c-sentence { display:flex; flex-direction:column; gap:2px; }
+.c-hours { font-family:inherit; font-size:16px; color:#231F20; line-height:1.4; }
+.c-locs { margin:2px 0 0 0; padding:0 0 0 20px; list-style:disc;
+  font-family:inherit; font-size:16px; color:#231F20; line-height:1.45; }
+.c-locs li { margin:0; padding:0; }
+.c-reason { font-family:inherit; font-size:15px; color:#5F5E5A; line-height:1.4; margin-top:2px; }
 .c-loc  { font-family:inherit; font-size:16px; font-weight:400; color:#231F20;
   line-height:1.4; }
 .c-addr { font-family:inherit; font-size:15px; font-weight:400; color:#5F5E5A;
@@ -52,13 +59,13 @@
 .c-addr a { color:#4A4844; text-decoration:underline;
   text-decoration-color:rgba(74,72,68,0.35); text-underline-offset:2px; }
 .c-addr a:hover { color:#0066B3; text-decoration-color:#0066B3; }
-.c-desc[hidden] { display:none; }
+.c-desc[hidden], .c-details[hidden] { display:none; }
 
 /* Action row under the address: details toggle left, Register right. Both are
    plain text controls — no fill, no border, no pill — told apart by weight and
    colour. The description opens below this row, so Register never moves. */
 .c-actions { display:flex; flex-direction:row; flex-wrap:wrap; align-items:center;
-  justify-content:space-between; gap:4px 24px; margin-top:4px; }
+  justify-content:space-between; gap:8px 16px; margin-top:4px; }
 .c-more, .c-reg { display:inline-flex; align-items:center; gap:6px; min-height:36px;
   font-family:inherit; font-size:16px; line-height:1.3; cursor:pointer;
   text-underline-offset:3px; }
@@ -70,13 +77,13 @@
   text-underline-offset:3px; }
 .c-more:hover { color:#004E8A; }
 .c-more-icon { font-size:15px; line-height:1; }
-/* Loud: bold brand blue text link. margin-left:auto keeps it on the right even
-   when a row has no description and so no toggle. */
-.c-reg { margin-left:auto; font-weight:600; color:#0066B3; text-decoration:none; }
-/* Underline the word only, so the arrow doesn't carry a stray line. */
-.c-reg-label { text-decoration:underline; text-decoration-thickness:1px;
-  text-underline-offset:3px; }
-.c-reg:hover { color:#004E8A; }
+/* Register is the primary action: a filled brand-blue button. margin-left:auto
+   keeps it on the right even when a row has no details toggle. */
+.c-reg { margin-left:auto; justify-content:center; min-width:112px; box-sizing:border-box;
+  padding:10px 20px; border-radius:8px; background:#0066B3; color:#fff;
+  font-weight:600; text-decoration:none; white-space:nowrap; }
+.c-reg-label { text-decoration:none; }
+.c-reg:hover { background:#004E8A; color:#fff; }
 
 /* Keyboard users get the same affordance a mouse user gets on hover. */
 .c-row a:focus-visible, .c-row button:focus-visible, .sc-chip:focus-visible,
@@ -84,7 +91,7 @@
   outline:2px solid #0066B3; outline-offset:2px; border-radius:3px; }
 .c-desc a { color:#0066B3; text-decoration:underline; text-underline-offset:2px; }
 .c-desc { font-family:inherit; font-size:16px; font-weight:400; color:#231F20;
-  line-height:1.6; margin-top:2px; }
+  line-height:1.6; margin-top:2px; overflow-wrap:anywhere; }
 
 /* Touch: full 44px tap targets. */
 @media (pointer:coarse), (max-width:479px) {
@@ -128,8 +135,7 @@
 
 @media (max-width:479px) {
   .c-row { gap:12px; }
-  .c-when { font-size:12px; }
-  .c-top { flex-direction:column; gap:6px; }
+  .c-when { font-size:13px; }
 }
 
 /* ============================================================
@@ -138,13 +144,25 @@
    The second script still depends on every class name below.
    ============================================================ */
 .status-pill { display:inline-block; flex:0 0 auto; white-space:nowrap;
-  font-family:inherit; font-size:13px; font-weight:700; text-transform:uppercase;
-  letter-spacing:0.6px; line-height:1.2; border-radius:999px; padding:6px 14px; }
+  font-family:inherit; font-size:12px; font-weight:700; text-transform:uppercase;
+  letter-spacing:0.6px; line-height:1.2; border-radius:6px; padding:5px 10px; }
 .status-pill.is-closed  { background:#D92D20; color:#fff; }
 .status-pill.is-alt     { background:#F5C542; color:#1A1A1A; }
 .status-pill.is-event   { background:#0066B3; color:#fff; }
 .status-pill.is-open    { background:#0A8A43; color:#fff; }
-.status-pill.is-special { background:#6B7280; color:#fff; }
+/* Access restrictions are not an opening status: an outlined neutral label in
+   sentence case, so it reads as information rather than an alert. */
+.status-pill.is-special { background:transparent; color:#3F4247; border:1px solid #9AA0A6;
+  text-transform:none; letter-spacing:0; font-weight:600; font-size:14px; padding:5px 10px; }
+/* An ordinary day needs no badge; the line under the name says it all. */
+.center-card[data-status="regular"] .status-pill,
+.center-card[data-status="open"] .status-pill { display:none; }
+.center-card[data-status="regular"] .center-card-top,
+.center-card[data-status="open"] .center-card-top { gap:0; }
+.center-detail:empty { display:none; }
+.center-card[data-status="open"] .center-detail::before { content:""; display:inline-block;
+  width:9px; height:9px; border-radius:50%; background:#0A8A43; margin-right:8px;
+  vertical-align:1px; }
 
 .hours-list { display:flex; flex-direction:column; gap:16px; width:100%;
   max-width:680px; box-sizing:border-box; }
@@ -152,7 +170,7 @@
 /* align-items:flex-start, not center: a long centre name wraps to two lines and
    the pill should stay level with the first one. min-width:0 lets the name wrap
    at all — without it a flex child refuses to shrink and squashes the pill. */
-.center-card-top { display:flex; flex-direction:row; gap:12px; align-items:flex-start; justify-content:space-between; }
+.center-card-top { display:flex; flex-direction:column; gap:6px; align-items:flex-start; justify-content:flex-start; }
 .center-name-today { font-family:inherit; font-size:20px; font-weight:600; color:#231F20;
   line-height:1.3; min-width:0; }
 .center-detail { font-family:inherit; font-size:17px; font-weight:400; color:#231F20;
@@ -161,7 +179,8 @@
 @media (max-width:479px) {
   .center-name-today { font-size:18px; }
   .center-detail { font-size:16px; }
-  .status-pill { font-size:12px; padding:6px 12px; letter-spacing:0.6px; }
+  .center-card { padding:14px 16px; }
+  .hours-list { gap:12px; }
 }
 
 /* ============================================================
@@ -324,18 +343,55 @@
 .center-card.is-linked:hover .center-link { text-decoration: none; }
 .center-card .center-link:focus-visible { outline: 2px solid #0066B3; outline-offset: 2px; }
 
-/* Event flyer: capped thumbnail on the card, full size in a modal */
-.c-flyer { flex:0 0 auto; align-self:flex-start; padding:0; border:1px solid #D3D1C7;
-  border-radius:6px; background:#fff; cursor:zoom-in; overflow:hidden; line-height:0; }
-.c-flyer img { display:block; width:auto; height:auto; max-width:120px; max-height:160px;
-  object-fit:contain; }
-.c-flyer:hover, .c-flyer:focus-visible { border-color:#0066B3; outline:none; }
-@media (max-width:479px) { .c-flyer img { max-width:80px; max-height:110px; } }
+/* Event flyer. Phones: no thumbnail beside the text — the flyer sits inside the
+   details panel at a useful size, never cropped. Wide screens (768px+): a capped
+   thumbnail to the right, where the text column still has room. */
+.c-flyer { display:none; }
+.c-figure { display:block; width:100%; margin:12px 0 4px 0; padding:0; border:0;
+  background:none; text-align:left; cursor:zoom-in; font:inherit; }
+.c-figure img { display:block; width:auto; height:auto; max-width:100%; max-height:480px;
+  object-fit:contain; border:1px solid #D3D1C7; border-radius:6px; background:#fff; }
+.c-figure-cap { display:inline-block; margin-top:6px; font-size:15px; color:#0066B3;
+  text-decoration:underline; text-underline-offset:3px; }
+.c-figure:hover .c-figure-cap { color:#004E8A; }
+@media (min-width:768px) {
+  .c-flyer { display:block; flex:0 0 auto; align-self:flex-start; padding:0;
+    border:1px solid #D3D1C7; border-radius:6px; background:#fff; cursor:zoom-in;
+    overflow:hidden; line-height:0; }
+  .c-flyer img { display:block; width:auto; height:auto; max-width:120px; max-height:160px;
+    object-fit:contain; }
+  .c-flyer:hover, .c-flyer:focus-visible { border-color:#0066B3; outline:none; }
+  .c-figure, .c-more.is-img-only, .c-details.is-img-only { display:none !important; }
+}
 .c-flyer-dlg { padding:0; border:0; background:transparent; max-width:92vw; max-height:92vh;
   overflow:visible; }
 .c-flyer-dlg::backdrop { background:rgba(0,0,0,.75); }
 .c-flyer-dlg img { display:block; max-width:92vw; max-height:92vh; width:auto; height:auto;
   object-fit:contain; border-radius:4px; }
-.c-flyer-close { position:absolute; top:-14px; right:-14px; width:36px; height:36px;
+.c-flyer-close { position:absolute; top:8px; right:8px; width:44px; height:44px;
   border:0; border-radius:50%; background:#fff; color:#231F20; font-size:24px; line-height:1;
   cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,.3); }
+
+/* ============================================================
+   Phones and small tablets: less framing, shorter hero.
+   ============================================================ */
+@media (max-width:767px) {
+  /* The "Upcoming" title block: 480px tall by default, pushing the first event
+     below the fold. Same treatment on the events page and the home page. */
+  .rotated-title.upcoming-events { height:150px; min-height:0; margin-top:20px; }
+  .rotated-title.upcoming-events .rotated-title-box.small-title { height:120px;
+    width:min(300px, 80%); }
+  /* An inactive Clear keeps its slot on desktop so nothing shifts; on a phone
+     the controls already stack, so the empty slot is just a blank row. */
+  .sc-filterrow-2 > .is-off { display:none; }
+
+  /* One white sheet instead of a card inside a card. Month groups are separated
+     by their headings, not by boxes. */
+  .month-stack { gap:0; }
+  .month-card { border:0; border-radius:0; padding:0; background:transparent; }
+  .month-card + .month-card .month-head { padding-top:20px; }
+  .sc-filters > .upcoming-wrapper { width:auto; max-width:none; margin:0 -18px;
+    padding:16px 18px 8px 18px; background:#fff; border-radius:12px 12px 0 0; }
+  .sc-subscribe { margin-bottom:12px; }
+  .c-row { padding-top:14px; padding-bottom:14px; }
+}

@@ -1,6 +1,6 @@
 // Build stamp. deploy.sh rewrites the date on every deploy, so the console
 // tells you exactly which version a page is running.
-var SCHEDULE_BUILD = '2026-10-23 16:31';
+var SCHEDULE_BUILD = '2026-10-23 16:49';
 console.log('[schedule] build ' + SCHEDULE_BUILD);
 
 // Centre naming lives at the top level because BOTH DOMContentLoaded blocks below
@@ -240,28 +240,53 @@ document.addEventListener('DOMContentLoaded', function () {
     if (list.length < 2) return list[0] || '';
     return list.slice(0, -1).join(', ') + ' and ' + list[list.length - 1];
   }
+  // A closure or alt-hours row reads as a short notice rather than a sentence:
+  // a heading, the hours if they changed, the affected centres as a list, and the
+  // reason. One centre folds its name into the heading and needs no list.
+  function reasonLabel(reason, type) {
+    var r = String(reason || '').trim();
+    if (!r) return '';
+    var map = type === 'closed' ? REASON_CLOSED : REASON_ALT;
+    // "Unforeseen Circumstances" maps to '' on purpose: it stays unsaid.
+    if (Object.prototype.hasOwnProperty.call(map, r.toLowerCase()) && !map[r.toLowerCase()]) return '';
+    return r.charAt(0).toUpperCase() + r.slice(1);
+  }
   function writeSentence(g) {
     var names = g.names.slice().sort();
-    var s;
-    if (g.type === 'closed') {
-      s = ' will be closed';
-    } else {
-      s = ' will be open' +
-          (g.hours ? ' ' + sentenceHours(g.hours) : '') +
-          ' instead of ' + (names.length > 1 ? 'their' : 'its') + ' regular hours';
-    }
-    var phrase = reasonPhrase(g.desc, g.type);
-    if (phrase) s += (g.type === 'closed' ? ' ' : ', ') + phrase;
-    // Centre names in bold, the joining words and the rest of the sentence plain.
+    var one = names.length === 1;
     g.sen.textContent = '';
-    names.forEach(function (n, i) {
-      if (i > 0) g.sen.appendChild(document.createTextNode(i === names.length - 1 ? ' and ' : ', '));
-      var b = document.createElement('strong');
-      b.className = 'c-centre';
-      b.textContent = n;
-      g.sen.appendChild(b);
-    });
-    g.sen.appendChild(document.createTextNode(s + '.'));
+    var head = document.createElement('div');
+    head.className = 'c-name';
+    if (g.type === 'closed') {
+      head.textContent = one ? names[0] + ' closed' : names.length + ' STEM Centers closed';
+    } else {
+      head.textContent = one ? names[0] + ': alternate hours'
+                             : names.length + ' STEM Centers on alternate hours';
+    }
+    g.sen.appendChild(head);
+    if (g.type !== 'closed' && g.hours) {
+      var hl = document.createElement('div');
+      hl.className = 'c-hours';
+      hl.textContent = 'Open ' + sentenceHours(g.hours) + ' instead of regular hours';
+      g.sen.appendChild(hl);
+    }
+    if (!one) {
+      var ul = document.createElement('ul');
+      ul.className = 'c-locs';
+      names.forEach(function (n) {
+        var li = document.createElement('li');
+        li.textContent = n;
+        ul.appendChild(li);
+      });
+      g.sen.appendChild(ul);
+    }
+    var why = reasonLabel(g.desc, g.type);
+    if (why) {
+      var rs = document.createElement('div');
+      rs.className = 'c-reason';
+      rs.textContent = 'Reason: ' + why;
+      g.sen.appendChild(rs);
+    }
   }
 
   rows.forEach(function (row) {
@@ -398,10 +423,17 @@ document.addEventListener('DOMContentLoaded', function () {
     when.textContent = whenLine(start, end, type, hours);
     top.appendChild(when);
 
-    var pill = document.createElement('span');
-    pill.className = 'c-pill';
-    pill.textContent = pillText;
-    top.appendChild(pill);
+    // Date on its own line, then ONE row of labels. An ordinary event carries no
+    // EVENT badge — everything in an events list is an event — so it shows only
+    // its programme tags. Closures and alt hours keep their coloured badge.
+    var labels = document.createElement('div');
+    labels.className = 'c-labels';
+    if (type !== 'event') {
+      var pill = document.createElement('span');
+      pill.className = 'c-pill';
+      pill.textContent = pillText;
+      labels.appendChild(pill);
+    }
 
     if (programs.length) {
       programs.forEach(function (pr) {
@@ -417,9 +449,10 @@ document.addEventListener('DOMContentLoaded', function () {
           tag.style.setProperty('--tag-color', meta.color);
           tag.style.setProperty('--tag-ink', '#fff');
         }
-        top.appendChild(tag);
+        labels.appendChild(tag);
       });
     }
+    if (labels.firstChild) top.appendChild(labels);
 
     body.appendChild(top);
 
@@ -502,6 +535,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // the right. The description opens BELOW the row, so Register never moves when
     // the toggle is pressed. The row is built only when it has something in it.
     var hasDesc = !!(desc && type === 'event');
+    var hasImg  = !!(imgSrc && type === 'event');
     // A per-event "add to calendar" link was removed deliberately: Google's
     // template URL makes a COPY, which silently goes stale when the event moves.
     // The page offers one subscribe link to the real calendar instead.
@@ -509,29 +543,57 @@ document.addEventListener('DOMContentLoaded', function () {
     // An empty Webflow link binding comes through as "#", same as the map link.
     if (regHref === '#') regHref = '';
 
-    if (hasDesc || regHref) {
+    if (hasDesc || hasImg || regHref) {
       var acts = document.createElement('div');
       acts.className = 'c-actions';
 
+      // The details panel holds the description and, on phones, the flyer. The
+      // collapsed list stays compact; the artwork is one tap away at a useful size.
       var d = null;
-      if (hasDesc) {
+      if (hasDesc || hasImg) {
         d = document.createElement('div');
-        d.className = 'c-desc';
-        linkify(d, desc);
-        // The description is hidden until asked for. A page can carry a hundred
-        // near-identical qualifiers, and every row reading the same three sentences
-        // is what makes the list unscannable.
+        d.className = 'c-details' + (hasDesc ? '' : ' is-img-only');
+        if (hasDesc) {
+          var dt = document.createElement('div');
+          dt.className = 'c-desc';
+          linkify(dt, desc);
+          d.appendChild(dt);
+        }
+        if (hasImg) {
+          var fig = document.createElement('button');
+          fig.type = 'button';
+          fig.className = 'c-figure';
+          fig.setAttribute('aria-label', 'View full-size flyer' + (name ? ' for ' + name : ''));
+          var fi = document.createElement('img');
+          fi.src = imgSrc;
+          fi.alt = name ? 'Flyer: ' + name : 'Event flyer';
+          fi.loading = 'lazy';
+          fig.appendChild(fi);
+          var cap = document.createElement('span');
+          cap.className = 'c-figure-cap';
+          cap.textContent = 'View full size';
+          fig.appendChild(cap);
+          fig.addEventListener('click', function () { openFlyer(imgSrc, name); });
+          d.appendChild(fig);
+        }
+        // Hidden until asked for. A page can carry a hundred near-identical
+        // qualifiers, and every row reading the same three sentences is what
+        // makes the list unscannable.
         var descId = 'c-desc-' + (++DESC_SEQ);
         d.id = descId;
         d.hidden = true;
 
         var more = document.createElement('button');
         more.type = 'button';
-        more.className = 'c-more';
+        // An image-only panel has nothing to add on wide screens, where the
+        // thumbnail already shows, so CSS hides that toggle there.
+        more.className = 'c-more' + (hasDesc ? '' : ' is-img-only');
         more.setAttribute('aria-expanded', 'false');
         more.setAttribute('aria-controls', descId);
+        var showTxt = hasDesc ? 'Show details' : 'Show flyer';
+        var hideTxt = hasDesc ? 'Hide details' : 'Hide flyer';
         var moreLabel = document.createElement('span');
-        moreLabel.textContent = 'Show details';
+        moreLabel.textContent = showTxt;
         // The chevron is decoration; aria-expanded already tells a screen reader the state.
         var moreIcon = document.createElement('span');
         moreIcon.className = 'c-more-icon';
@@ -542,7 +604,7 @@ document.addEventListener('DOMContentLoaded', function () {
         more.addEventListener('click', function () {
           var open = d.hidden;
           d.hidden = !open;
-          moreLabel.textContent = open ? 'Hide details' : 'Show details';
+          moreLabel.textContent = open ? hideTxt : showTxt;
           moreIcon.textContent = open ? '\u2303' : '\u2304';
           more.setAttribute('aria-expanded', open ? 'true' : 'false');
         });
@@ -569,10 +631,11 @@ document.addEventListener('DOMContentLoaded', function () {
     el.appendChild(body);
 
     // Flyer thumbnail, right of the text. Click opens it full size in a modal.
-    if (type === 'event' && imgSrc) {
+    if (hasImg) {
+      el.classList.add('has-flyer');
       var th = document.createElement('button');
       th.type = 'button';
-      th.className = 'c-flyer';
+      th.className = 'c-flyer';  // wide screens only; phones get the flyer in details
       th.setAttribute('aria-label', 'View flyer' + (name ? ' for ' + name : ''));
       var ti = document.createElement('img');
       ti.src = imgSrc;
@@ -927,7 +990,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // lowercased. Lets the pill and the sentence differ from what the hours field says.
   var SPECIALS = {
     'by appointment': {
-      pill: 'SCHEDULED PROGRAMS',
+      pill: 'Scheduled programs only',
       detail: 'Open for scheduled student and educator programs. No public drop-in hours.'
     }
   };
@@ -1185,25 +1248,34 @@ document.addEventListener('DOMContentLoaded', function () {
       return p ? lead + ' \u00b7 ' + p + '.' : lead + '.';
     }
 
-    function setPill(cls, text) {
+    // data-status lets the CSS mark the line (a green dot for open now) and decide
+    // which badges earn space: exceptions show one, an ordinary day shows none.
+    function setPill(cls, text, status) {
       pill.className = 'status-pill ' + cls;
       pill.textContent = text;
+      card.setAttribute('data-status', status);
     }
 
     var today = dayInfo(0);
 
     // No clock hours today — by appointment, scheduled programs, and similar.
     if (today.kind === 'special') {
+      // Who may use the centre is not the same thing as whether it is open, so the
+      // label says "Access" and the line under it says only what the data knows:
+      // the mapped explanation, or the next day with clock hours, or nothing.
       var sp = SPECIALS[today.label.trim().toLowerCase()];
-      setPill('is-special', sp ? sp.pill : today.label.toUpperCase());
-      detail.textContent = sp ? sp.detail : today.label;
+      setPill('is-special', sp ? sp.pill : 'Access: ' + today.label, 'special');
+      var nx = sp ? '' : nextOpenPhrase();
+      detail.textContent = sp ? sp.detail : (nx ? nx + '.' : '');
       return;
     }
 
     // Shut all day: the CMS says Closed, or a closure was announced.
     if (today.kind === 'closed') {
-      setPill('is-closed', 'CLOSED TODAY');
-      detail.textContent = closedLine('Closed today');
+      // The badge already says closed today; the line says when it next opens.
+      setPill('is-closed', 'Closed today', 'closed');
+      var nxt = nextOpenPhrase();
+      detail.textContent = nxt ? nxt + '.' : '';
       return;
     }
 
@@ -1212,7 +1284,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (today.over) {
       // The pill names the situation; the hours themselves belong in the sentence,
       // where they read as words rather than as a label.
-      setPill('is-alt', 'ALT HOURS');
+      setPill('is-alt', 'Alternate hours', 'alt');
       var altRange = 'Alternate hours today: ' + fmt(today.start) + ' – ' + fmt(today.end);
       if (now.min >= today.start && now.min < today.end) {
         detail.textContent = 'Open now · ' + altRange + '.';
@@ -1227,9 +1299,10 @@ document.addEventListener('DOMContentLoaded', function () {
     // Regular hours. The pill stays REGULAR HOURS all day — it answers "is this center
     // running its normal schedule", not "is the door open this minute". The detail line
     // carries the right-now status.
-    setPill('is-open', 'REGULAR HOURS');
+    setPill('is-open', 'Regular hours', 'regular');
     if (now.min >= today.start && now.min < today.end) {
-      detail.textContent = 'Open until ' + fmt(today.end) + '.';
+      card.setAttribute('data-status', 'open');
+      detail.textContent = 'Open today until ' + fmt(today.end) + '.';
     } else if (now.min < today.start) {
       detail.textContent = 'Closed now · Open ' + fmt(today.start) + ' – ' + fmt(today.end) + ' today.';
     } else {
