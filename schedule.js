@@ -1,6 +1,6 @@
 // Build stamp. deploy.sh rewrites the date on every deploy, so the console
 // tells you exactly which version a page is running.
-var SCHEDULE_BUILD = '2026-10-12 15:03';
+var SCHEDULE_BUILD = '2026-10-23 16:31';
 console.log('[schedule] build ' + SCHEDULE_BUILD);
 
 // Centre naming lives at the top level because BOTH DOMContentLoaded blocks below
@@ -67,6 +67,29 @@ document.addEventListener('DOMContentLoaded', function () {
   var MON = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
 
   function txt(el) { return el ? el.textContent.trim() : ''; }
+  // One shared <dialog> for every flyer. Esc, the backdrop and the X all close it.
+  var FLYER_DLG = null;
+  function openFlyer(src, label) {
+    if (!FLYER_DLG) {
+      FLYER_DLG = document.createElement('dialog');
+      FLYER_DLG.className = 'c-flyer-dlg';
+      var x = document.createElement('button');
+      x.type = 'button';
+      x.className = 'c-flyer-close';
+      x.setAttribute('aria-label', 'Close');
+      x.textContent = '\u00d7';
+      x.addEventListener('click', function () { FLYER_DLG.close(); });
+      var im = document.createElement('img');
+      FLYER_DLG.appendChild(x);
+      FLYER_DLG.appendChild(im);
+      FLYER_DLG.addEventListener('click', function (e) { if (e.target === FLYER_DLG) FLYER_DLG.close(); });
+      document.body.appendChild(FLYER_DLG);
+    }
+    var big = FLYER_DLG.querySelector('img');
+    big.src = src;
+    big.alt = label ? 'Flyer: ' + label : 'Event flyer';
+    if (FLYER_DLG.showModal) FLYER_DLG.showModal(); else window.open(src, '_blank');
+  }
   var DESC_SEQ = 0;   // unique ids so each details toggle can point at its own text
 
   // Staff type plain text into the description on Monday, so a URL or an email
@@ -273,6 +296,11 @@ document.addEventListener('DOMContentLoaded', function () {
       .map(function (s) { return s.trim().toUpperCase(); })
       .filter(Boolean);
     var regEl   = row.querySelector('.row-reglink');
+    // Event flyer: an Image element bound to the CMS Image field. Webflow keeps an
+    // unset binding in the DOM (w-dyn-bind-empty / w-condition-invisible), so test both.
+    var imgEl   = row.querySelector('.announce-image');
+    var imgSrc  = (imgEl && !/w-dyn-bind-empty|w-condition-invisible/.test(imgEl.className))
+                  ? (imgEl.getAttribute('src') || '') : '';
 
     // "CODE=#hex=Full Name" entries, pipe separated. A tag still awaiting
     // review has no colour yet and simply keeps the neutral pill.
@@ -539,6 +567,21 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     el.appendChild(body);
+
+    // Flyer thumbnail, right of the text. Click opens it full size in a modal.
+    if (type === 'event' && imgSrc) {
+      var th = document.createElement('button');
+      th.type = 'button';
+      th.className = 'c-flyer';
+      th.setAttribute('aria-label', 'View flyer' + (name ? ' for ' + name : ''));
+      var ti = document.createElement('img');
+      ti.src = imgSrc;
+      ti.alt = '';
+      ti.loading = 'lazy';
+      th.appendChild(ti);
+      th.addEventListener('click', function () { openFlyer(imgSrc, name); });
+      el.appendChild(th);
+    }
     card.appendChild(el);
   });
 
