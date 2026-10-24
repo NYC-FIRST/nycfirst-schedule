@@ -1,6 +1,6 @@
 // Build stamp. deploy.sh rewrites the date on every deploy, so the console
 // tells you exactly which version a page is running.
-var SCHEDULE_BUILD = '2026-10-24 17:17';
+var SCHEDULE_BUILD = '2026-10-24 17:21';
 console.log('[schedule] build ' + SCHEDULE_BUILD);
 
 // Centre naming lives at the top level because BOTH DOMContentLoaded blocks below
@@ -834,25 +834,29 @@ document.addEventListener('DOMContentLoaded', function () {
       return a;
     }
 
-    // A small panel: heading, one line of explanation, three buttons. Visitors
-    // were missing the old one-line version.
+    // One plain heading and three text links in a row.
     var ICS = 'calendar.google.com/calendar/ical/' + encodeURIComponent(SC_CAL_ID) + '/public/basic.ics';
     var subHead = document.createElement('div');
     subHead.className = 'sc-subscribe-head';
-    subHead.textContent = 'Get every event in your calendar';
-    var subNote = document.createElement('div');
-    subNote.className = 'sc-subscribe-note';
-    subNote.textContent = 'Subscribe once and new or changed events update automatically.';
-    var subBtns = document.createElement('div');
-    subBtns.className = 'sc-subscribe-btns';
-    subBtns.appendChild(subLink('Google',
+    subHead.textContent = 'Subscribe to the NYC FIRST events calendar.';
+    var subLinks = document.createElement('div');
+    subLinks.className = 'sc-subscribe-links';
+    function subSep() {
+      var s = document.createElement('span');
+      s.className = 'sc-subscribe-sep';
+      s.setAttribute('aria-hidden', 'true');
+      s.textContent = '\u00B7';
+      return s;
+    }
+    subLinks.appendChild(subLink('Google Calendar',
       'https://calendar.google.com/calendar/render?cid=' + encodeURIComponent(SC_CAL_ID)));
+    subLinks.appendChild(subSep());
     // webcal:// hands Apple Calendar a subscription rather than a downloaded file.
-    subBtns.appendChild(subLink('Apple', 'webcal://' + ICS));
-    subBtns.appendChild(subLink('Outlook', 'https://' + ICS));
+    subLinks.appendChild(subLink('Apple Calendar', 'webcal://' + ICS));
+    subLinks.appendChild(subSep());
+    subLinks.appendChild(subLink('Outlook', 'https://' + ICS));
     sub.appendChild(subHead);
-    sub.appendChild(subNote);
-    sub.appendChild(subBtns);
+    sub.appendChild(subLinks);
 
     stack.parentNode.insertBefore(sub, bar);
 
