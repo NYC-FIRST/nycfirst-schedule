@@ -1,6 +1,6 @@
 // Build stamp. deploy.sh rewrites the date on every deploy, so the console
 // tells you exactly which version a page is running.
-var SCHEDULE_BUILD = '2026-10-23 16:58';
+var SCHEDULE_BUILD = '2026-10-24 17:17';
 console.log('[schedule] build ' + SCHEDULE_BUILD);
 
 // Centre naming lives at the top level because BOTH DOMContentLoaded blocks below
@@ -289,6 +289,19 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
+  // Register sits under the flyer on wide screens (768px+, where the thumbnail
+  // shows) and in the action row on phones. One element, moved, never cloned.
+  var REG_WIDE = window.matchMedia('(min-width:768px)');
+  var regMoves = [];
+  function placeRegs() {
+    regMoves.forEach(function (m) {
+      var host = REG_WIDE.matches ? m.side : m.acts;
+      if (m.a.parentNode !== host) host.appendChild(m.a);
+    });
+  }
+  if (REG_WIDE.addEventListener) REG_WIDE.addEventListener('change', placeRegs);
+  else if (REG_WIDE.addListener) REG_WIDE.addListener(placeRegs);
+
   rows.forEach(function (row) {
     // ---- read what Webflow rendered ----
     var month   = txt(row.querySelector('.month-label'));
@@ -543,6 +556,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // An empty Webflow link binding comes through as "#", same as the map link.
     if (regHref === '#') regHref = '';
 
+    var regA = null;
     if (hasDesc || hasImg || regHref) {
       var acts = document.createElement('div');
       acts.className = 'c-actions';
@@ -622,6 +636,7 @@ document.addEventListener('DOMContentLoaded', function () {
         regLabel.textContent = 'Register';
         a.appendChild(regLabel);
         acts.appendChild(a);
+        regA = a;
       }
 
       body.appendChild(acts);
@@ -643,10 +658,15 @@ document.addEventListener('DOMContentLoaded', function () {
       ti.loading = 'lazy';
       th.appendChild(ti);
       th.addEventListener('click', function () { openFlyer(imgSrc, name); });
-      el.appendChild(th);
+      var side = document.createElement('div');
+      side.className = 'c-side';
+      side.appendChild(th);
+      el.appendChild(side);
+      if (regA) { regMoves.push({ a: regA, acts: acts, side: side }); }
     }
     card.appendChild(el);
   });
+  placeRegs();
 
 
   // ---------- filters ----------
@@ -813,20 +833,26 @@ document.addEventListener('DOMContentLoaded', function () {
       a.textContent = label;
       return a;
     }
-    function subText(t) { return document.createTextNode(t); }
 
-    // One sentence, three links. Only the platform names are clickable: the
-    // line is a page-level utility, not a call to action, and making the whole
-    // sentence a link would give it the weight of a heading.
+    // A small panel: heading, one line of explanation, three buttons. Visitors
+    // were missing the old one-line version.
     var ICS = 'calendar.google.com/calendar/ical/' + encodeURIComponent(SC_CAL_ID) + '/public/basic.ics';
-    sub.appendChild(subText('Add the NYC FIRST events calendar to '));
-    sub.appendChild(subLink('Google',
+    var subHead = document.createElement('div');
+    subHead.className = 'sc-subscribe-head';
+    subHead.textContent = 'Get every event in your calendar';
+    var subNote = document.createElement('div');
+    subNote.className = 'sc-subscribe-note';
+    subNote.textContent = 'Subscribe once and new or changed events update automatically.';
+    var subBtns = document.createElement('div');
+    subBtns.className = 'sc-subscribe-btns';
+    subBtns.appendChild(subLink('Google',
       'https://calendar.google.com/calendar/render?cid=' + encodeURIComponent(SC_CAL_ID)));
-    sub.appendChild(subText(', '));
     // webcal:// hands Apple Calendar a subscription rather than a downloaded file.
-    sub.appendChild(subLink('Apple', 'webcal://' + ICS));
-    sub.appendChild(subText(', or '));
-    sub.appendChild(subLink('Outlook', 'https://' + ICS));
+    subBtns.appendChild(subLink('Apple', 'webcal://' + ICS));
+    subBtns.appendChild(subLink('Outlook', 'https://' + ICS));
+    sub.appendChild(subHead);
+    sub.appendChild(subNote);
+    sub.appendChild(subBtns);
 
     stack.parentNode.insertBefore(sub, bar);
 
