@@ -1,6 +1,6 @@
 // Build stamp. deploy.sh rewrites the date on every deploy, so the console
 // tells you exactly which version a page is running.
-var SCHEDULE_BUILD = '2026-10-24 17:21';
+var SCHEDULE_BUILD = '2026-10-28 11:29';
 console.log('[schedule] build ' + SCHEDULE_BUILD);
 
 // Centre naming lives at the top level because BOTH DOMContentLoaded blocks below
@@ -29,7 +29,13 @@ console.log('[schedule] build ' + SCHEDULE_BUILD);
     'jamaica: qpl': 'JA',
     'roosevelt island: cornell tech': 'CT',
     'south bronx: andrew freedman home': 'AFH',
-    'washington heights: nypl': 'WH'
+    'washington heights: nypl': 'WH',
+    // One row that applies to every centre (e.g. a holiday closure).
+    'all': 'ALL',
+    'all centers': 'ALL',
+    'all centres': 'ALL',
+    'all stem centers': 'ALL',
+    'all stem centres': 'ALL'
   };
   function ckey(s) {
     var k = String(s || '').trim().toLowerCase().replace(/\s+/g, ' ');
@@ -46,8 +52,13 @@ console.log('[schedule] build ' + SCHEDULE_BUILD);
     'HY':  'Manhattan: Hudson Yards',
     'CT':  'Roosevelt Island: Cornell Tech',
     'AFH': 'South Bronx: Andrew Freedman Home',
-    'WH':  'Washington Heights: NYPL'
+    'WH':  'Washington Heights: NYPL',
+    'ALL': 'All STEM Centers'
   };
+
+  // Every real centre. An 'ALL' row expands to these wherever a code is looked up.
+  var ALL_CODES = ['D13','CH','FR','JA','HY','CT','AFH','WH'];
+  function expandCode(code) { return code === 'ALL' ? ALL_CODES.slice() : [code]; }
 
 document.addEventListener('DOMContentLoaded', function () {
   var list = document.querySelector('.announce-list');
@@ -480,6 +491,11 @@ document.addEventListener('DOMContentLoaded', function () {
       locLabel = host;
       locKey = 'v-' + host.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
       locGroup = 'other';
+    } else if (centreCode === 'ALL') {
+      // Filed under every centre, so filtering by any one centre still shows it.
+      el.scLocs = ALL_CODES.map(function (c) {
+        return { key: 'c-' + c.toLowerCase(), label: DISPLAY[c], group: 'centre' };
+      });
     } else if (DISPLAY[centreCode]) {
       locLabel = DISPLAY[centreCode];
       locKey = 'c-' + centreCode.toLowerCase();
@@ -500,11 +516,14 @@ document.addEventListener('DOMContentLoaded', function () {
       var gkey = [type, ymd(start), ymd(end || start), desc.toLowerCase(), hours].join('|');
       var grp = GROUPS[gkey];
       var myLoc = locKey ? { key: locKey, label: locLabel, group: locGroup } : null;
+      var myLocs = el.scLocs || (myLoc ? [myLoc] : []);
       if (grp) {
         // Fold this centre into the row already on the page. This is the one
         // deliberate early return: the duplicate row is meant to be dropped.
         if (grp.names.indexOf(display) < 0) grp.names.push(display);
-        if (myLoc && !grp.locs.some(function (l) { return l.key === myLoc.key; })) grp.locs.push(myLoc);
+        myLocs.forEach(function (m) {
+          if (!grp.locs.some(function (l) { return l.key === m.key; })) grp.locs.push(m);
+        });
         writeSentence(grp);
         if (teaser) teaserShown--;
         return;
@@ -512,7 +531,7 @@ document.addEventListener('DOMContentLoaded', function () {
       var sen = document.createElement('div');
       sen.className = 'c-sentence';
       grp = GROUPS[gkey] = { sen: sen, type: type, hours: hours, desc: desc,
-                             names: [display], locs: myLoc ? [myLoc] : [] };
+                             names: [display], locs: myLocs.slice() };
       el.scLocs = grp.locs;
       writeSentence(grp);
       body.appendChild(sen);
@@ -1081,10 +1100,13 @@ document.addEventListener('DOMContentLoaded', function () {
     var to = String(toText || '').trim();
     if (!/^\d{4}-\d{2}-\d{2}$/.test(to) || to < from) to = from;
 
+    var codes = expandCode(ckey(centerText));
     for (var day = from, guard = 0; guard < 400; guard++) {
-      var k = ckey(centerText) + '|' + day;
-      // a closure outranks alt hours on the same day
-      if (!(overrides[k] && overrides[k].kind === 'closed')) overrides[k] = entry;
+      codes.forEach(function (code) {
+        var k = code + '|' + day;
+        // a closure outranks alt hours on the same day
+        if (!(overrides[k] && overrides[k].kind === 'closed')) overrides[k] = entry;
+      });
       if (day === to) break;
       day = isoPlus(day, 1);
     }
@@ -1129,18 +1151,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // A multi-day announcement covers every day in the span, not just the first.
     // The end date is inclusive: 16 to 18 means all three days are affected.
-    var from = d.textContent.trim();
-    var e    = row.querySelector('.row-enddate');
-    var to   = e ? e.textContent.trim() : '';
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(to) || to < from) to = from;
-
-    for (var day = from, guard = 0; guard < 400; guard++) {
-      var k = ckey(c.textContent) + '|' + day;
-      // a closure outranks alt hours on the same day
-      if (!(overrides[k] && overrides[k].kind === 'closed')) overrides[k] = entry;
-      if (day === to) break;
-      day = isoPlus(day, 1);
-    }
+    var e = row.querySelector('.row-enddate');
+    addOverride(c.textContent, d.textContent, e ? e.textContent : '', entry);
   });
 
   }
@@ -1180,9 +1192,13 @@ document.addEventListener('DOMContentLoaded', function () {
             // through ckey() — it lowercases anything not in ALIASES, and the
             // cards look these up in upper case.
             var key = String(code).trim().toUpperCase();
-            overrides[key + '|' + iso] = (o.kind === 'alt')
+            var entry = (o.kind === 'alt')
               ? { kind: 'alt', label: o.hours || '' }
               : { kind: 'closed' };
+            expandCode(key).forEach(function (c) {
+              var k = c + '|' + iso;
+              if (!(overrides[k] && overrides[k].kind === 'closed')) overrides[k] = entry;
+            });
           });
         });
       })
