@@ -1,4 +1,4 @@
-/* schedule build: 2026-10-28 11:29 */
+/* schedule build: 2026-10-28 12:14 */
 /* keep the raw Webflow output out of sight */
 .announce-image, .hours-data, .row-center, .row-date, .row-enddate, .row-programs, .row-program, .row-tagcolors, .row-host, .row-location, .row-maplink { display:none; }
 .month-label { display:none; }
@@ -380,3 +380,6 @@
   .sc-subscribe { margin-bottom:12px; }
   .c-row { padding-top:14px; padding-bottom:14px; }
 }
+
+/* STEM Center page: a weekday whose hours change in the next 7 days */
+.sc-day-changed { color:#D92D20 !important; font-weight:600; }

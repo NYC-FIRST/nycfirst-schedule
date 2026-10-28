@@ -1,6 +1,6 @@
 // Build stamp. deploy.sh rewrites the date on every deploy, so the console
 // tells you exactly which version a page is running.
-var SCHEDULE_BUILD = '2026-10-28 11:29';
+var SCHEDULE_BUILD = '2026-10-28 12:14';
 console.log('[schedule] build ' + SCHEDULE_BUILD);
 
 // Centre naming lives at the top level because BOTH DOMContentLoaded blocks below
@@ -1347,6 +1347,49 @@ document.addEventListener('DOMContentLoaded', function () {
   });
   }
 
-  loadOverrides().then(renderHours);
+  // STEM Center page: each centre card lists its regular weekly hours, one row per
+  // weekday (Webflow classes monday, tuesday, Wednesday... — case varies). When a
+  // closure or special hours falls in the next 7 days, that weekday's hours are
+  // replaced in red. The card names its centre in data-sc-center.
+  var WEEKDAY_CLASS = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+  var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  function renderScPage() {
+    var cards = document.querySelectorAll('[data-sc-center]');
+    if (!cards.length) return;
+    var now = nyParts();
+
+    cards.forEach(function (card) {
+      var ck = ckey(card.getAttribute('data-sc-center'));
+      for (var i = 0; i < 7; i++) {
+        var iso = isoPlus(now.iso, i);
+        var ov = overrides[ck + '|' + iso];
+        if (!ov) continue;
+        var want = WEEKDAY_CLASS[(now.wd + i) % 7];
+        var row = [].slice.call(card.querySelectorAll('[class]')).filter(function (el) {
+          return [].some.call(el.classList, function (c) { return c.toLowerCase() === want; });
+        })[0];
+        var cell = row && row.lastElementChild;
+        if (!cell || cell.getAttribute('data-sc-changed') === '1') continue;
+
+        var p = iso.split('-');
+        var when = i === 0 ? 'today' : MON[+p[1] - 1] + ' ' + (+p[2]);
+        var text;
+        if (ov.kind === 'closed') text = 'Closed ' + when;
+        else text = (i === 0 ? 'Today' : when) + ': ' + (ov.label || 'special hours');
+
+        cell.setAttribute('data-sc-changed', '1');
+        cell.setAttribute('title', 'Regular hours: ' + cell.textContent.trim());
+        cell.textContent = text;
+        cell.classList.add('sc-day-changed');
+        row.classList.add('sc-day-changed-row');
+      }
+    });
+  }
+
+  loadOverrides().then(function () {
+    try { renderHours(); } catch (e) { console.warn('[schedule] renderHours', e); }
+    renderScPage();
+  });
 });
 
