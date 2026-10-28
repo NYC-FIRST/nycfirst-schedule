@@ -1,6 +1,6 @@
 // Build stamp. deploy.sh rewrites the date on every deploy, so the console
 // tells you exactly which version a page is running.
-var SCHEDULE_BUILD = '2026-10-28 12:49';
+var SCHEDULE_BUILD = '2026-10-28 12:54';
 console.log('[schedule] build ' + SCHEDULE_BUILD);
 
 // Centre naming lives at the top level because BOTH DOMContentLoaded blocks below
@@ -911,7 +911,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var ICS = 'calendar.google.com/calendar/ical/' + encodeURIComponent(SC_CAL_ID) + '/public/basic.ics';
     var subHead = document.createElement('div');
     subHead.className = 'sc-subscribe-head';
-    subHead.textContent = 'Subscribe to the NYC FIRST events calendar.';
+    subHead.textContent = 'Subscribe to the NYC FIRST events calendar. \uD83D\uDCC5';
     var subLinks = document.createElement('div');
     subLinks.className = 'sc-subscribe-links';
     function subSep() {
