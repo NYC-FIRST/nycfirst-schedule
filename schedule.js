@@ -1,6 +1,6 @@
 // Build stamp. deploy.sh rewrites the date on every deploy, so the console
 // tells you exactly which version a page is running.
-var SCHEDULE_BUILD = '2026-10-28 12:22';
+var SCHEDULE_BUILD = '2026-10-28 12:49';
 console.log('[schedule] build ' + SCHEDULE_BUILD);
 
 // Centre naming lives at the top level because BOTH DOMContentLoaded blocks below
@@ -133,6 +133,47 @@ document.addEventListener('DOMContentLoaded', function () {
   function parseYMD(s) {
     var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec((s || '').trim());
     return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null;
+  }
+
+  // Google Calendar "add this event" link: opens Google Calendar with the event
+  // filled in, and the visitor clicks Save. It makes a COPY — a later change to
+  // the event does not reach it. Accepted on 28 Oct 2026; the subscribe line is
+  // still there for anyone who wants live updates.
+  function pad2(n) { return (n < 10 ? '0' : '') + n; }
+  function gDate(d) { return d.getFullYear() + pad2(d.getMonth() + 1) + pad2(d.getDate()); }
+  function gTimes(hours) {
+    var m = String(hours || '').match(/(\d{1,2})(?::(\d{2}))?\s*([ap])\.?m\.?\s*(?:-|\u2013|\u2014|to)\s*(\d{1,2})(?::(\d{2}))?\s*([ap])\.?m\.?/i);
+    if (!m) return null;
+    function t(h, mi, ap) {
+      h = +h % 12 + (ap.toLowerCase() === 'p' ? 12 : 0);
+      return pad2(h) + pad2(+(mi || 0)) + '00';
+    }
+    return [t(m[1], m[2], m[3]), t(m[4], m[5], m[6])];
+  }
+  function addToCalendarUrl(ev) {
+    if (!ev.start) return '';
+    var multi = ev.end && ev.end.getTime() > ev.start.getTime();
+    var times = multi ? null : gTimes(ev.hours);
+    var dates;
+    if (times) {
+      dates = gDate(ev.start) + 'T' + times[0] + '/' + gDate(ev.start) + 'T' + times[1];
+    } else {
+      // All day (or a multi-day span): Google's end date is exclusive.
+      var last = multi ? ev.end : ev.start;
+      var after = new Date(last.getFullYear(), last.getMonth(), last.getDate() + 1);
+      dates = gDate(ev.start) + '/' + gDate(after);
+    }
+    var details = (ev.desc || '').slice(0, 1200);
+    if (ev.reg) details += (details ? '\n\n' : '') + 'Register: ' + ev.reg;
+    var q = [
+      'action=TEMPLATE',
+      'text=' + encodeURIComponent(ev.name || 'NYC FIRST event'),
+      'dates=' + dates,
+      'ctz=America/New_York'
+    ];
+    if (details) q.push('details=' + encodeURIComponent(details));
+    if (ev.location) q.push('location=' + encodeURIComponent(ev.location));
+    return 'https://calendar.google.com/calendar/render?' + q.join('&');
   }
 
   // "2:00 pm - 6:00 pm" -> "2PM TO 6PM"; "10:30 am - 1:00 pm" -> "10:30AM TO 1PM"
@@ -568,15 +609,18 @@ document.addEventListener('DOMContentLoaded', function () {
     // the toggle is pressed. The row is built only when it has something in it.
     var hasDesc = !!(desc && type === 'event');
     var hasImg  = !!(imgSrc && type === 'event');
-    // A per-event "add to calendar" link was removed deliberately: Google's
-    // template URL makes a COPY, which silently goes stale when the event moves.
-    // The page offers one subscribe link to the real calendar instead.
     var regHref = regEl && regEl.getAttribute('href');
     // An empty Webflow link binding comes through as "#", same as the map link.
     if (regHref === '#') regHref = '';
 
+    // Per-event "Add to calendar" (Google only) — see addToCalendarUrl().
+    var calHref = (type === 'event')
+      ? addToCalendarUrl({ name: name, start: start, end: end, hours: hours, desc: desc,
+                           reg: regHref, location: addr || host })
+      : '';
+
     var regA = null;
-    if (hasDesc || hasImg || regHref) {
+    if (hasDesc || hasImg || regHref || calHref) {
       var acts = document.createElement('div');
       acts.className = 'c-actions';
 
@@ -642,6 +686,16 @@ document.addEventListener('DOMContentLoaded', function () {
           more.setAttribute('aria-expanded', open ? 'true' : 'false');
         });
         acts.appendChild(more);
+      }
+
+      if (calHref) {
+        var ca = document.createElement('a');
+        ca.className = 'c-addcal';
+        ca.href = calHref;
+        ca.target = '_blank';
+        ca.rel = 'noopener';
+        ca.textContent = 'Add to calendar';
+        acts.appendChild(ca);
       }
 
       if (regHref) {
