@@ -1,4 +1,4 @@
-/* schedule build: 2026-10-28 12:21 */
+/* schedule build: 2026-10-28 12:22 */
 /* keep the raw Webflow output out of sight */
 .announce-image, .hours-data, .row-center, .row-date, .row-enddate, .row-programs, .row-program, .row-tagcolors, .row-host, .row-location, .row-maplink { display:none; }
 .month-label { display:none; }
@@ -382,5 +382,6 @@
 }
 
 /* STEM Center page: closures / special hours in the next 7 days, under the regular hours */
-.sc-week-changes { margin-top:12px; }
-.sc-week-change { color:#D92D20; font-weight:600; font-size:16px; line-height:1.4; }
+.sc-week-changes { margin-top:16px; }
+.sc-week-change, .sc-week-change > div { color:#D92D20; }
+.sc-week-change .stem-center-location-card-day-hours { justify-self:end; text-align:right; }

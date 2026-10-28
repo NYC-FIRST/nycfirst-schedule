@@ -1,6 +1,6 @@
 // Build stamp. deploy.sh rewrites the date on every deploy, so the console
 // tells you exactly which version a page is running.
-var SCHEDULE_BUILD = '2026-10-28 12:21';
+var SCHEDULE_BUILD = '2026-10-28 12:22';
 console.log('[schedule] build ' + SCHEDULE_BUILD);
 
 // Centre naming lives at the top level because BOTH DOMContentLoaded blocks below
@@ -1349,9 +1349,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // STEM Center page: each centre card lists its REGULAR weekly hours, one row per
   // weekday (label + hours). Those stay untouched. Closures and special hours in the
-  // next 7 days are added as red lines under the list, e.g.
-  //   "This week: closed Wed Oct 28"
-  //   "This week: Wed Oct 28, 12:00 pm - 12:30 pm"
+  // next 7 days are added in red under the list, under a "Changes this week" heading,
+  // one row per change: "Wed Oct 28 ... Closed" / "Wed Oct 28 ... 12:00 pm - 12:30 pm".
   // Consecutive days with the same change are merged into one line.
   // The card names its centre in data-sc-center.
   var SC_WD  = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -1390,16 +1389,25 @@ document.addEventListener('DOMContentLoaded', function () {
       var list = label && label.parentElement && label.parentElement.parentElement;
       if (!list || !list.parentNode) return;
 
+      // Built from the page's own Webflow classes so it matches the card: a heading
+      // like "Card Holder Walk-in Hours", then rows like the weekday rows, in red.
       var box = document.createElement('div');
       box.className = 'sc-week-changes';
+      var head = document.createElement('div');
+      head.className = 'text-block-85 sc-week-head';
+      head.textContent = 'Changes this week \u2193';
+      box.appendChild(head);
       runs.forEach(function (r) {
-        var when = dayText(r.from) + (r.to > r.from ? ' \u2013 ' + dayText(r.to) : '');
-        var line = document.createElement('div');
-        line.className = 'sc-week-change';
-        line.textContent = r.ov.kind === 'closed'
-          ? 'This week: closed ' + when
-          : 'This week: ' + when + ', ' + (r.ov.label || 'special hours');
-        box.appendChild(line);
+        var row = document.createElement('div');
+        row.className = 'stem-center-location-card-day-wrapper sc-week-change';
+        var d = document.createElement('div');
+        d.className = 'stem-center-location-card-day-name';
+        d.textContent = dayText(r.from) + (r.to > r.from ? ' \u2013 ' + dayText(r.to) : '');
+        var h = document.createElement('div');
+        h.className = 'stem-center-location-card-day-hours';
+        h.textContent = r.ov.kind === 'closed' ? 'Closed' : (r.ov.label || 'Special hours');
+        row.appendChild(d); row.appendChild(h);
+        box.appendChild(row);
       });
       list.parentNode.insertBefore(box, list.nextSibling);
     });
