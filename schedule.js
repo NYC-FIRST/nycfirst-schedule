@@ -1,6 +1,6 @@
 // Build stamp. deploy.sh rewrites the date on every deploy, so the console
 // tells you exactly which version a page is running.
-var SCHEDULE_BUILD = '2026-10-28 12:14';
+var SCHEDULE_BUILD = '2026-10-28 12:18';
 console.log('[schedule] build ' + SCHEDULE_BUILD);
 
 // Centre naming lives at the top level because BOTH DOMContentLoaded blocks below
@@ -1348,7 +1348,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   // STEM Center page: each centre card lists its regular weekly hours, one row per
-  // weekday (Webflow classes monday, tuesday, Wednesday... — case varies). When a
+  // weekday (label + hours, e.g. .stem-center-location-card-day-wrapper). When a
   // closure or special hours falls in the next 7 days, that weekday's hours are
   // replaced in red. The card names its centre in data-sc-center.
   var WEEKDAY_CLASS = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
@@ -1366,9 +1366,12 @@ document.addEventListener('DOMContentLoaded', function () {
         var ov = overrides[ck + '|' + iso];
         if (!ov) continue;
         var want = WEEKDAY_CLASS[(now.wd + i) % 7];
-        var row = [].slice.call(card.querySelectorAll('[class]')).filter(function (el) {
-          return [].some.call(el.classList, function (c) { return c.toLowerCase() === want; });
+        // The day rows are found by their visible label ("Wednesday"): a leaf element
+        // whose text is the weekday name. Its parent is the row; the hours sit last.
+        var label = [].slice.call(card.querySelectorAll('*')).filter(function (el) {
+          return !el.children.length && el.textContent.trim().toLowerCase() === want;
         })[0];
+        var row = label && label.parentElement;
         var cell = row && row.lastElementChild;
         if (!cell || cell.getAttribute('data-sc-changed') === '1') continue;
 
