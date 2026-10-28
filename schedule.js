@@ -1,6 +1,6 @@
 // Build stamp. deploy.sh rewrites the date on every deploy, so the console
 // tells you exactly which version a page is running.
-var SCHEDULE_BUILD = '2026-10-28 12:18';
+var SCHEDULE_BUILD = '2026-10-28 12:21';
 console.log('[schedule] build ' + SCHEDULE_BUILD);
 
 // Centre naming lives at the top level because BOTH DOMContentLoaded blocks below
@@ -1347,46 +1347,61 @@ document.addEventListener('DOMContentLoaded', function () {
   });
   }
 
-  // STEM Center page: each centre card lists its regular weekly hours, one row per
-  // weekday (label + hours, e.g. .stem-center-location-card-day-wrapper). When a
-  // closure or special hours falls in the next 7 days, that weekday's hours are
-  // replaced in red. The card names its centre in data-sc-center.
-  var WEEKDAY_CLASS = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
-  var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  // STEM Center page: each centre card lists its REGULAR weekly hours, one row per
+  // weekday (label + hours). Those stay untouched. Closures and special hours in the
+  // next 7 days are added as red lines under the list, e.g.
+  //   "This week: closed Wed Oct 28"
+  //   "This week: Wed Oct 28, 12:00 pm - 12:30 pm"
+  // Consecutive days with the same change are merged into one line.
+  // The card names its centre in data-sc-center.
+  var SC_WD  = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var SC_MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
   function renderScPage() {
     var cards = document.querySelectorAll('[data-sc-center]');
     if (!cards.length) return;
     var now = nyParts();
 
+    function dayText(i) {
+      var p = isoPlus(now.iso, i).split('-');
+      return SC_WD[(now.wd + i) % 7] + ' ' + SC_MON[+p[1] - 1] + ' ' + (+p[2]);
+    }
+
     cards.forEach(function (card) {
+      if (card.querySelector('.sc-week-changes')) return;
       var ck = ckey(card.getAttribute('data-sc-center'));
+
+      // Collect runs of identical changes across the next 7 days.
+      var runs = [];
       for (var i = 0; i < 7; i++) {
-        var iso = isoPlus(now.iso, i);
-        var ov = overrides[ck + '|' + iso];
+        var ov = overrides[ck + '|' + isoPlus(now.iso, i)];
         if (!ov) continue;
-        var want = WEEKDAY_CLASS[(now.wd + i) % 7];
-        // The day rows are found by their visible label ("Wednesday"): a leaf element
-        // whose text is the weekday name. Its parent is the row; the hours sit last.
-        var label = [].slice.call(card.querySelectorAll('*')).filter(function (el) {
-          return !el.children.length && el.textContent.trim().toLowerCase() === want;
-        })[0];
-        var row = label && label.parentElement;
-        var cell = row && row.lastElementChild;
-        if (!cell || cell.getAttribute('data-sc-changed') === '1') continue;
-
-        var p = iso.split('-');
-        var when = i === 0 ? 'today' : MON[+p[1] - 1] + ' ' + (+p[2]);
-        var text;
-        if (ov.kind === 'closed') text = 'Closed ' + when;
-        else text = (i === 0 ? 'Today' : when) + ': ' + (ov.label || 'special hours');
-
-        cell.setAttribute('data-sc-changed', '1');
-        cell.setAttribute('title', 'Regular hours: ' + cell.textContent.trim());
-        cell.textContent = text;
-        cell.classList.add('sc-day-changed');
-        row.classList.add('sc-day-changed-row');
+        var sig = ov.kind + '|' + (ov.label || '');
+        var last = runs[runs.length - 1];
+        if (last && last.sig === sig && last.to === i - 1) last.to = i;
+        else runs.push({ sig: sig, ov: ov, from: i, to: i });
       }
+      if (!runs.length) return;
+
+      // The weekly list: the parent of the row whose label reads "Monday".
+      var label = [].slice.call(card.querySelectorAll('*')).filter(function (el) {
+        return !el.children.length && el.textContent.trim().toLowerCase() === 'monday';
+      })[0];
+      var list = label && label.parentElement && label.parentElement.parentElement;
+      if (!list || !list.parentNode) return;
+
+      var box = document.createElement('div');
+      box.className = 'sc-week-changes';
+      runs.forEach(function (r) {
+        var when = dayText(r.from) + (r.to > r.from ? ' \u2013 ' + dayText(r.to) : '');
+        var line = document.createElement('div');
+        line.className = 'sc-week-change';
+        line.textContent = r.ov.kind === 'closed'
+          ? 'This week: closed ' + when
+          : 'This week: ' + when + ', ' + (r.ov.label || 'special hours');
+        box.appendChild(line);
+      });
+      list.parentNode.insertBefore(box, list.nextSibling);
     });
   }
 
